@@ -16,9 +16,11 @@ namespace TaskBot.Forms
         {
             await base.Load(message);
             logger.Debug(
-                "Form '{form}' loaded with because {updateType} event.", 
+                "Form '{form}' loaded because of {updateType} event from {user} (DeviceId = {deviceId}).", 
                 this.GetType().Name, 
-                message.MessageType);
+                message.MessageType,
+                message.Message.From.Username,
+                message.DeviceId);
         }
     }
 }

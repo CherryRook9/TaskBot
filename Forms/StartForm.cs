@@ -11,7 +11,6 @@ namespace TaskBot.Forms
         public override async Task Load(MessageResult message)
         {
             await base.Load(message);
-            
             if (message.MessageType == MessageType.Text
                 && message.MessageText == "/start")
             {
@@ -22,7 +21,6 @@ namespace TaskBot.Forms
         public override async Task Render(MessageResult message)
         {
             await base.Render(message);
-            
             if (botEnabled)
             {
                 await this.Device.Send("Бот запущен.");

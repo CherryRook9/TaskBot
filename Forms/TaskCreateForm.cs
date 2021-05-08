@@ -1,11 +1,16 @@
+using System;
 using System.Threading.Tasks;
+using TaskBot.Services;
 using TelegramBotBase.Base;
 
 namespace TaskBot.Forms
 {
     class TaskCreationForm : FormBase 
     {
-        string taskName = null;
+        [Dependency] 
+        public TasksContext db { get; set; }
+
+        string taskTitle = null;
         string taskDescription = null;
 
         public override async Task Load(MessageResult message)
@@ -13,11 +18,11 @@ namespace TaskBot.Forms
             await base.Load(message);
             if (!string.IsNullOrEmpty(message.MessageText))
             {
-                if (taskName == null && taskDescription == null)
+                if (taskTitle == null && taskDescription == null)
                 {
-                    taskName = message.MessageText;
+                    taskTitle = message.MessageText;
                 }
-                else if (taskName != null && taskDescription == null)
+                else if (taskTitle != null && taskDescription == null)
                 {
                     taskDescription = message.MessageText;
                 }
@@ -28,17 +33,25 @@ namespace TaskBot.Forms
         {
             await base.Render(message);
 
-            if (taskName == null && taskDescription == null)
+            if (taskTitle == null && taskDescription == null)
             {
                 await Device.Send("Начинаем создание новой задачи.\nВведите название:");
             }
-            else if (taskName != null && taskDescription == null)
+            else if (taskTitle != null && taskDescription == null)
             {
                 await Device.Send("Введите описание:");
             }
             else
             {
-                await Device.Send($"Задача создана.\nНазвание:\n{taskName}\nОписание:\n{taskDescription}");
+                await Device.Send($"Задача создана.\nНазвание: {taskTitle}\nОписание:\n{taskDescription}");
+                db.Tasks.Add(new Models.PersonalTask() 
+                { 
+                    Id = Guid.NewGuid(),
+                    Title = taskTitle,
+                    Description = taskDescription,
+                    CreatorDeviceId = message.DeviceId
+                });
+                await db.SaveChangesAsync();
                 await NavigateTo(new MenuForm());
             }
         }
