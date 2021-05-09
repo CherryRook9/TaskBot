@@ -12,32 +12,35 @@ namespace TaskBot
 {
     public static class Program
     {
-
-        static string token = Environment.GetEnvironmentVariable("BOT_TOKEN");
+        private const string tokenEnvVarName = "BOT_TOKEN";
+        static string Token => Environment.GetEnvironmentVariable(tokenEnvVarName) 
+            ?? throw new Exception($"Environment variable '{tokenEnvVarName}' not set.");
         const bool storeSessions = false;
 
         public static async Task Main(string[] args)
         {
             ConfigureLogger();
-            ConfigureDependecies();
-
-            var bot = new BotBase<StartForm>(token);
-            
-            if (storeSessions)
-            {
-                bot.StateMachine = new TelegramBotBase.States.XMLStateMachine(AppContext.BaseDirectory + "config\\states.xml");
-            }
-            
-            bot.BotCommands = new List<Telegram.Bot.Types.BotCommand> {
-                (new Telegram.Bot.Types.BotCommand() { Command = "start", Description = "Запускает бота"}),
-                (new Telegram.Bot.Types.BotCommand() { Command = "stop", Description = "Останавливает бота"}),
-            };
-            await bot.UploadBotCommands();
             try
             {
-                bot.Start();
-                Log.Logger.Information("Bot started, hit Ctrl+Z to stop.");
-                Console.In.ReadToEnd();
+                ConfigureDependecies();
+
+                var bot = new BotBase<StartForm>(Token);
+
+                if (storeSessions)
+                {
+                    #pragma warning disable 0162
+                    bot.StateMachine = new TelegramBotBase.States.XMLStateMachine(AppContext.BaseDirectory + "config\\states.xml");
+                    #pragma warning restore
+                }
+                
+                bot.BotCommands = new List<Telegram.Bot.Types.BotCommand> {
+                    (new Telegram.Bot.Types.BotCommand() { Command = "start", Description = "Запускает бота"}),
+                    (new Telegram.Bot.Types.BotCommand() { Command = "stop", Description = "Останавливает бота"}),
+                };
+                await bot.UploadBotCommands();
+                    bot.Start();
+                    Log.Logger.Information("Bot started, hit Ctrl+Z to stop.");
+                    Console.In.ReadToEnd();
             }
             catch(Exception e)
             {

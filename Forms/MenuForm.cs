@@ -15,14 +15,14 @@ namespace TaskBot.Forms
             {
                 await NavigateTo(DI.Resolve(new TaskCreationForm()));
             }
-
-            if (call.Method == "nav" && call.Value == "list")
+            else if (call.Method == "nav" && call.Value == "list")
             {
                 await NavigateTo(DI.Resolve(new TaskListForm()));
             }
+
         }
 
-        
+
         public override async Task Render(MessageResult message)
         {
             await base.Render(message);
