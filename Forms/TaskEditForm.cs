@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using TaskBot.Services;
 using TelegramBotBase.Base;
 using TelegramBotBase.Form;
@@ -8,7 +9,7 @@ namespace TaskBot.Forms
 {
     class TaskEditForm : FormBase
     {
-        enum EditState { Watch, Title, Description }
+        enum EditState { Watch, Title, Description, Responsible }
 
         EditState currentState = EditState.Watch;
 
@@ -25,7 +26,7 @@ namespace TaskBot.Forms
         public override async Task Load(MessageResult message)
         {
             await base.Load(message);
-            var task = await db.Tasks.FindAsync(editTaskId);
+            var task = await db.Tasks.FirstAsync(x => x.Id == editTaskId);
             switch (currentState)
             {
                 case EditState.Watch:
@@ -43,6 +44,10 @@ namespace TaskBot.Forms
                         {
                             currentState = EditState.Description;
                         }
+                        else if (call.Method == "responsible")
+                        {
+                            currentState = EditState.Responsible;
+                        }
                     }
                     return;
                 case EditState.Title:
@@ -59,6 +64,7 @@ namespace TaskBot.Forms
                     await db.SaveChangesAsync();
                     currentState = EditState.Watch;
                     return;
+
                 default:
                     return;
             }
@@ -66,14 +72,15 @@ namespace TaskBot.Forms
 
         public override async Task Render(MessageResult message)
         {
-            var task = await db.Tasks.FindAsync(editTaskId);
+            var task = await db.Tasks.Include(x => x.Responsible).FirstAsync(x => x.Id == editTaskId);
             switch (currentState)
             {
                 case EditState.Watch:
-                    await Device.Send($"{task.Title}\n{task.Description}");
+                    await Device.Send($"{task.Title}\n{task.Description}\n{task.Responsible.Login}");
                     var buttons = new ButtonForm();
                     buttons.AddButtonRow("Редактивовать название", new CallbackData("edit-title", "").Serialize());
                     buttons.AddButtonRow("Редактивовать описание", new CallbackData("edit-description", "").Serialize());
+                    buttons.AddButtonRow("Изменить ответственного", new CallbackData("responsible", "").Serialize());
                     buttons.AddButtonRow("Звершить редактирование", new CallbackData("back", "").Serialize());
                     await Device.Send("Выберете, что редактировать", buttons);
                     return;
@@ -82,6 +89,11 @@ namespace TaskBot.Forms
                     return;
                 case EditState.Description:
                     await Device.Send($"Введите новое описание");
+                    return;
+                case EditState.Responsible:
+                    //await Device.Send($"Введите другого ответственного");
+                    await NavigateTo(DI.Resolve(new AssignTaskForm(this, editTaskId)));
+                    currentState = EditState.Watch;
                     return;
                 default:
                     return;

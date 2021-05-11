@@ -9,8 +9,8 @@ namespace TaskBot.Services
         {
             Database.EnsureCreated();
         }
-        
-        public DbSet<User> Users { get;set; }
+
+        public DbSet<User> Users { get; set; }
 
         public DbSet<PersonalTask> Tasks { get; set; }
 
@@ -19,8 +19,11 @@ namespace TaskBot.Services
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<User>(
                 x => x.HasKey(x => x.DeviceId));
-            modelBuilder.Entity<PersonalTask>(
-                x => x.HasKey(x => x.Id));
+            modelBuilder.Entity<PersonalTask>().HasKey(x => x.Id);
+            modelBuilder.Entity<PersonalTask>()
+                    .HasOne(x => x.Responsible)
+                    .WithMany(t => t.PersonalTasks)
+                    .HasForeignKey(x => x.ResponsibleDeviceId);
         }
     }
 }

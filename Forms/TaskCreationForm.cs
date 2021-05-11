@@ -5,9 +5,9 @@ using TelegramBotBase.Base;
 
 namespace TaskBot.Forms
 {
-    class TaskCreationForm : FormBase 
+    class TaskCreationForm : FormBase
     {
-        [Dependency] 
+        [Dependency]
         public TasksContext db { get; set; }
 
         string taskTitle = null;
@@ -44,15 +44,18 @@ namespace TaskBot.Forms
             else
             {
                 await Device.Send($"Задача создана.\nНазвание: {taskTitle}\nОписание:\n{taskDescription}");
-                db.Tasks.Add(new Models.PersonalTask() 
-                { 
-                    Id = Guid.NewGuid(),
+                var id = Guid.NewGuid();
+                db.Tasks.Add(new Models.PersonalTask()
+                {
+                    Id = id,
                     Title = taskTitle,
                     Description = taskDescription,
                     CreatorDeviceId = message.DeviceId
                 });
+
                 await db.SaveChangesAsync();
-                await NavigateTo(new MenuForm());
+                await NavigateTo(DI.Resolve(new AssignTaskForm(id)));
+
             }
         }
     }

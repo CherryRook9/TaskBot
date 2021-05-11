@@ -11,5 +11,9 @@ namespace TaskBot.Models
         public string Title { get; set; }
 
         public string Description { get; set; }
+
+        public long? ResponsibleDeviceId { get; set; }
+
+        public User Responsible { get; set; }
     }
 }

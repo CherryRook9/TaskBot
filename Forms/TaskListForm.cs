@@ -41,7 +41,10 @@ namespace TaskBot.Forms
         {
             await base.Render(message);
 
-            var tasks = await db.Tasks.Where(x => x.CreatorDeviceId == message.DeviceId).ToListAsync();
+            var tasks = await db.Tasks
+                .Where(x => x.CreatorDeviceId == message.DeviceId || x.ResponsibleDeviceId == message.DeviceId)
+                .Include(x => x.Responsible)
+                .ToListAsync();
             var buttons = new ButtonForm();
             if (tasks.Count == 0)
             {
@@ -55,7 +58,7 @@ namespace TaskBot.Forms
                     var taskButtons = new ButtonForm();
                     taskButtons.AddButtonRow("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize());
                     taskButtons.AddButtonRow("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize());
-                    await Device.Send($"Задача\n\nНазвание:{task.Title}\nОписание:\n{task.Description}", taskButtons);
+                    await Device.Send($"Задача\n\nНазвание:{task.Title}\nОписание:\n{task.Description}\nОтветственный пользователь:\n{task.Responsible.Login}", taskButtons);
                 }
             }
 
