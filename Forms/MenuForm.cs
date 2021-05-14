@@ -27,8 +27,12 @@ namespace TaskBot.Forms
         {
             await base.Render(message);
             var buttons = new ButtonForm();
-            buttons.AddButtonRow("Создать задачу", new CallbackData("nav", "create").Serialize());
-            buttons.AddButtonRow("Посмотреть задачи", new CallbackData("nav", "list").Serialize());
+             buttons.AddButtonRow(
+                        new ButtonBase("Создать задачу", new CallbackData("nav", "create").Serialize()),
+                        new ButtonBase("Созданные задачи", new CallbackData("nav", "list").Serialize()),
+                        new ButtonBase("Назначенные задачи", new CallbackData("nav", "list").Serialize()));
+            //buttons.AddButtonRow("Создать задачу", new CallbackData("nav", "create").Serialize());
+            //buttons.AddButtonRow("Посмотреть задачи", new CallbackData("nav", "list").Serialize());
             await this.Device.Send("Выберите действие", buttons);
         }
     }

@@ -34,6 +34,20 @@ namespace TaskBot.Forms
                     db.Tasks.Remove(task);
                     await db.SaveChangesAsync();
                 }
+                else if (call.Method == "accept")
+                {
+                    /*var deleteTaskId = Guid.Parse(call.Value);
+                    var task = await db.Tasks.FindAsync(deleteTaskId);
+                    db.Tasks.Remove(task);
+                    await db.SaveChangesAsync();*/
+                }
+                else if (call.Method == "reject")
+                {
+                    /*var deleteTaskId = Guid.Parse(call.Value);
+                    var task = await db.Tasks.FindAsync(deleteTaskId);
+                    db.Tasks.Remove(task);
+                    await db.SaveChangesAsync();*/
+                }
             }
         }
 
@@ -50,17 +64,54 @@ namespace TaskBot.Forms
             {
                 await Device.Send("Вы не имеете созданных или назначенных задач.");
             }
-            else
+            //созданы мной
+            else if (CreatorDeviceId == message.DeviceId)
             {
                 await Device.Send("Список созданных или назначенных задач");
                 foreach (var task in tasks)
                 {
                     var taskButtons = new ButtonForm();
-                    taskButtons.AddButtonRow("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize());
-                    taskButtons.AddButtonRow("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize());
+                    taskButtons.AddButtonRow(
+                            new ButtonBase("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize()),
+                            new ButtonBase("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize()));
+
+                    //taskButtons.AddButtonRow("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize());
+                    //taskButtons.AddButtonRow("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize());
                     await Device.Send($"Задача\n\nНазвание:{task.Title}\nОписание:\n{task.Description}\nОтветственный пользователь:\n{task.Responsible.Login}", taskButtons);
                 }
             }
+            //созданы для меня
+            else if (ResponsibleDeviceId == message.DeviceId)
+            {
+                await Device.Send("Список созданных или назначенных задач");
+                foreach (var task in tasks)
+                {
+                    var taskButtons = new ButtonForm();
+                    taskButtons.AddButtonRow(
+                            new ButtonBase("Принять задачу", new CallbackData("accept", task.Id.ToString()).Serialize()),
+                            new ButtonBase("Отклонить задачу", new CallbackData("reject", task.Id.ToString()).Serialize()));
+
+                    //taskButtons.AddButtonRow("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize());
+                    //taskButtons.AddButtonRow("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize());
+                    await Device.Send($"Задача\n\nНазвание:{task.Title}\nОписание:\n{task.Description}\nОтветственный пользователь:\n{task.Responsible.Login}", taskButtons);
+                }
+            }
+
+            /*else 
+            {
+                await Device.Send("Список созданных или назначенных задач");
+                foreach (var task in tasks)
+                {
+                    var taskButtons = new ButtonForm();
+                    taskButtons.AddButtonRow(
+                            new ButtonBase("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize()),
+                            new ButtonBase("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize()));
+
+                    //taskButtons.AddButtonRow("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize());
+                    //taskButtons.AddButtonRow("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize());
+                    await Device.Send($"Задача\n\nНазвание:{task.Title}\nОписание:\n{task.Description}\nОтветственный пользователь:\n{task.Responsible.Login}", taskButtons);
+                }
+            }*/
 
             buttons.AddButtonRow("Вернуться в меню.", new CallbackData("nav", "back").Serialize());
             await this.Device.Send("Отображены все задачи", buttons);
