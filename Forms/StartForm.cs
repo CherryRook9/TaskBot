@@ -51,7 +51,7 @@ namespace TaskBot.Forms
             }
             catch (Exception e)
             {
-                throw;
+                logger.Error(e, "Some exception occured.");
             }
         }
 

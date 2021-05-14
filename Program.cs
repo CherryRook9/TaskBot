@@ -37,6 +37,9 @@ namespace TaskBot
                     (new Telegram.Bot.Types.BotCommand() { Command = "start", Description = "Запускает бота"}),
                     (new Telegram.Bot.Types.BotCommand() { Command = "stop", Description = "Останавливает бота"}),
                 };
+
+                bot.Exception += (s, e) => Log.Logger.Error(e.Error, "Exception on {sender}", s.GetType());
+
                 await bot.UploadBotCommands();
                     bot.Start();
                     Log.Logger.Information("Bot started, hit Ctrl+Z to stop.");

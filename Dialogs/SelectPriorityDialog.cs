@@ -6,51 +6,32 @@ using TaskBot.Services;
 using TelegramBotBase.Base;
 using TelegramBotBase.Form;
 
-namespace TaskBot.Forms
+namespace TaskBot.Dialogs
 {
-    class PriorityTaskForm : FormBase
+    class SelectPriorityDialog : ModalDialog
     {
-        // [Dependency]
-        // public TasksContext db { get; set; }
-        public Task completed;
-        private TaskCompletionSource<object> tcs;
-
-        public PriorityTaskForm(PersonalTask task, FormBase parentForm)
-        {
-            this.task = task;
-            this.tcs = new TaskCompletionSource<object>();
-            this.completed = tcs.Task;
-            this.parentForm = parentForm;
-        }
-
-        private readonly FormBase parentForm;
-        private readonly PersonalTask task;
+        public event Action<Models.Priority> Completed;
 
         public override async Task Action(MessageResult message)
         {
-
             await base.Load(message);
-            // var task = await db.Tasks.FirstAsync(x => x.Id == editTaskId);
             if (message.GetData<CallbackData>() is CallbackData call)
             {
                 if (call.Method == "normal")
                 {
-                    task.Priority = Models.Priority.Normal;
+                    Completed(Models.Priority.Normal);
+                    await this.CloseForm();
                 }
                 else if (call.Method == "important")
                 {
-                    task.Priority = Models.Priority.Important;
+                    Completed(Models.Priority.Important);
+                    await this.CloseForm();
                 }
                 else if (call.Method == "unimportant")
                 {
-                    task.Priority = Models.Priority.Unimportant;
+                    Completed(Models.Priority.Unimportant);
+                    await this.CloseForm();
                 }
-                else if (call.Method == "back")
-                {
-                    await NavigateTo(new MenuForm());
-                }
-                tcs.SetResult(null);
-                await NavigateTo(parentForm);
             }
         }
         public override async Task Render(MessageResult message)

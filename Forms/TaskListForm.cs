@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using TaskBot.Models;
 using TaskBot.Services;
 using TelegramBotBase.Base;
 using TelegramBotBase.Form;
@@ -10,8 +12,17 @@ namespace TaskBot.Forms
 {
     class TaskListForm : FormBase, IDisposable
     {
+        public enum DisplayMode { Assigned, Created }
+
+        private readonly DisplayMode mode;
+
         [Dependency]
         public TasksContext db { get; set; }
+
+        public TaskListForm(DisplayMode mode)
+        {
+            this.mode = mode;
+        }
 
         public override async Task Action(MessageResult message)
         {
@@ -55,66 +66,71 @@ namespace TaskBot.Forms
         {
             await base.Render(message);
 
-            var tasks = await db.Tasks
-                .Where(x => x.CreatorDeviceId == message.DeviceId || x.ResponsibleDeviceId == message.DeviceId)
-                .Include(x => x.Responsible)
-                .ToListAsync();
-            var buttons = new ButtonForm();
+            List<PersonalTask> tasks = await GetTaskList(message.DeviceId);
+
             if (tasks.Count == 0)
             {
                 await Device.Send("Вы не имеете созданных или назначенных задач.");
             }
-            //созданы мной
-            else if (CreatorDeviceId == message.DeviceId)
-            {
-                await Device.Send("Список созданных или назначенных задач");
-                foreach (var task in tasks)
-                {
-                    var taskButtons = new ButtonForm();
-                    taskButtons.AddButtonRow(
-                            new ButtonBase("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize()),
-                            new ButtonBase("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize()));
 
-                    //taskButtons.AddButtonRow("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize());
-                    //taskButtons.AddButtonRow("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize());
-                    await Device.Send($"Задача\n\nНазвание:{task.Title}\nОписание:\n{task.Description}\nОтветственный пользователь:\n{task.Responsible.Login}", taskButtons);
-                }
-            }
-            //созданы для меня
-            else if (ResponsibleDeviceId == message.DeviceId)
-            {
-                await Device.Send("Список созданных или назначенных задач");
-                foreach (var task in tasks)
-                {
-                    var taskButtons = new ButtonForm();
-                    taskButtons.AddButtonRow(
-                            new ButtonBase("Принять задачу", new CallbackData("accept", task.Id.ToString()).Serialize()),
-                            new ButtonBase("Отклонить задачу", new CallbackData("reject", task.Id.ToString()).Serialize()));
+            await Device.Send("Список созданных или назначенных задач");
 
-                    //taskButtons.AddButtonRow("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize());
-                    //taskButtons.AddButtonRow("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize());
-                    await Device.Send($"Задача\n\nНазвание:{task.Title}\nОписание:\n{task.Description}\nОтветственный пользователь:\n{task.Responsible.Login}", taskButtons);
+            foreach (var task in tasks)
+            {
+                ButtonForm taskButtons;
+                if (mode == DisplayMode.Created)
+                {
+                    taskButtons = new ButtonForm();
+                    taskButtons.AddButtonRow(
+                        new ButtonBase("Редактивовать задачу",
+                                       new CallbackData("edit", task.Id.ToString()).Serialize()),
+                        new ButtonBase("Удалить задачу",
+                                       new CallbackData("delete", task.Id.ToString()).Serialize()));
                 }
+                else
+                {
+                    taskButtons = null;
+                }
+
+                var messageText = 
+                    $"Задача\n\nНазвание: *{task.Title}*\n" +
+                    $"Описание:\n{task.Description}\n" +
+                    $"Ответственный пользователь:\n{task.Responsible.Login}";
+
+                await Device.Send(
+                    messageText,
+                    taskButtons,
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
             }
 
-            /*else 
-            {
-                await Device.Send("Список созданных или назначенных задач");
-                foreach (var task in tasks)
-                {
-                    var taskButtons = new ButtonForm();
-                    taskButtons.AddButtonRow(
-                            new ButtonBase("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize()),
-                            new ButtonBase("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize()));
-
-                    //taskButtons.AddButtonRow("Редактивовать задачу", new CallbackData("edit", task.Id.ToString()).Serialize());
-                    //taskButtons.AddButtonRow("Удалить задачу", new CallbackData("delete", task.Id.ToString()).Serialize());
-                    await Device.Send($"Задача\n\nНазвание:{task.Title}\nОписание:\n{task.Description}\nОтветственный пользователь:\n{task.Responsible.Login}", taskButtons);
-                }
-            }*/
-
+            var buttons = new ButtonForm();
             buttons.AddButtonRow("Вернуться в меню.", new CallbackData("nav", "back").Serialize());
             await this.Device.Send("Отображены все задачи", buttons);
+        }
+
+        private async Task<List<PersonalTask>> GetTaskList(long deviceId)
+        {
+            List<PersonalTask> tasks;
+            if (mode == DisplayMode.Assigned)
+            {
+                tasks = await db.Tasks
+                    .Where(x => x.ResponsibleDeviceId == deviceId)
+                    .Include(x => x.Responsible)
+                    .ToListAsync();
+            }
+            else if (mode == DisplayMode.Created)
+            {
+                tasks = await db.Tasks
+                    .Where(x => x.CreatorDeviceId == deviceId)
+                    .Include(x => x.Responsible)
+                    .ToListAsync();
+            }
+            else
+            {
+                throw new Exception($"Режим отображения списка задач имеен недопустимое значение '{mode}'.");
+            }
+
+            return tasks;
         }
 
         void IDisposable.Dispose()

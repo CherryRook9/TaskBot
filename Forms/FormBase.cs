@@ -10,6 +10,7 @@ namespace TaskBot.Forms
         public FormBase() : base()
         {
             logger = Serilog.Log.Logger;
+            DI.Resolve(this);
         }
 
         public override async Task Load(MessageResult message)

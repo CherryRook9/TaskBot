@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using TaskBot.Dialogs;
 using TaskBot.Services;
 using Telegram.Bot.Types.ReplyMarkups;
 using TelegramBotBase.Base;
@@ -51,21 +52,23 @@ namespace TaskBot.Forms
                         }
                         else if (call.Method == "deadline")
                         {
-                            currentState = EditState.Deadline;
+                            var deadlineSelection = new DateSelectionDialog();
+                            deadlineSelection.Completed += date => {
+                                task.Deadline = date;
+                                db.Tasks.Update(task);
+                                db.SaveChanges();
+                            };
+                            await OpenModal(deadlineSelection);
                         }
                         else if (call.Method == "priority")
                         {
-                            var childForm = new PriorityTaskForm(task, this);
-                            var t = Task.Factory.StartNew(async () => {
-                                await NavigateTo(childForm);
-                            });
-                            
-                            await childForm.completed;
-
-                            db.Tasks.Update(task);
-                            await db.SaveChangesAsync();
-                            currentState = EditState.Watch;
-                            currentState = EditState.Priority;
+                            var prioritySelection = new SelectPriorityDialog();
+                            prioritySelection.Completed += priority => {
+                                task.Priority = priority;
+                                db.Tasks.Update(task);
+                                db.SaveChanges();
+                            };
+                            await OpenModal(prioritySelection);
                         }
                     }
                     return;
@@ -84,23 +87,11 @@ namespace TaskBot.Forms
                     currentState = EditState.Watch;
                     return;
                 case EditState.Deadline:
-
-                    await NavigateTo(DI.Resolve(new DateForm()));
-
-                    db.Tasks.Update(task);
-                    await db.SaveChangesAsync();
                     currentState = EditState.Watch;
                     return;
                 case EditState.Priority:
-                    // var childForm = new PriorityTaskForm(task, this);
-                    // await NavigateTo(childForm);
-                    // await childForm.completed;
-
-                    // db.Tasks.Update(task);
-                    // await db.SaveChangesAsync();
                     currentState = EditState.Watch;
                     return;
-
                 default:
                     return;
             }
@@ -112,7 +103,9 @@ namespace TaskBot.Forms
             switch (currentState)
             {
                 case EditState.Watch:
-                    await Device.Send($"{task.Title}\n{task.Description}\n{task.Responsible.Login}");
+                    await Device.Send(
+                        $"{task.Title}\n{task.Description}\n{task.Responsible.Login}\n" +
+                        $"Приоритет: {task.Priority}\nДедлайн: {task.Deadline}");
                     var buttons = new ButtonForm();
 
                     buttons.AddButtonRow(
@@ -121,8 +114,8 @@ namespace TaskBot.Forms
                         new ButtonBase("Ответственный", new CallbackData("responsible", "").Serialize()));
 
                     buttons.AddButtonRow(
-                                            new ButtonBase("Дата", new CallbackData("deadline", "").Serialize()),
-                                            new ButtonBase("Приоритет", new CallbackData("priority", "").Serialize()));
+                        new ButtonBase("Дата", new CallbackData("deadline", "").Serialize()),
+                        new ButtonBase("Приоритет", new CallbackData("priority", "").Serialize()));
 
                     buttons.AddButtonRow("Звершить редактирование", new CallbackData("back", "").Serialize());
                     await Device.Send("Выберете, что редактировать", buttons);
@@ -139,17 +132,8 @@ namespace TaskBot.Forms
                     currentState = EditState.Watch;
                     return;
                 case EditState.Deadline:
-                    await Device.Send($"Введите новую дату окончания");
-                    //await Device.Send($"Введите другого ответственного");
-                    //await NavigateTo(DI.Resolve(new AssignTaskForm(this, editTaskId)));
-                    //currentState = EditState.Watch;
                     return;
                 case EditState.Priority:
-                    await NavigateTo(DI.Resolve(new AssignTaskForm(this, editTaskId)));
-                    await Device.Send($"Введите новый приоритет");
-                    //await Device.Send($"Введите другого ответственного");
-                    //await NavigateTo(DI.Resolve(new AssignTaskForm(this, editTaskId)));
-                    //currentState = EditState.Watch;
                     return;
                 default:
                     return;
