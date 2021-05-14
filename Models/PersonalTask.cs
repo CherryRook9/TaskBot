@@ -2,6 +2,7 @@ using System;
 
 namespace TaskBot.Models
 {
+    public enum Priority { Important, Normal, Unimportant }
     public class PersonalTask
     {
         public Guid Id { get; set; }
@@ -13,6 +14,10 @@ namespace TaskBot.Models
         public string Description { get; set; }
 
         public long? ResponsibleDeviceId { get; set; }
+
+        public DateTime Deadline { get; set; }
+
+        public Priority Priority { get; set; }
 
         public User Responsible { get; set; }
     }

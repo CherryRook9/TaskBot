@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using TaskBot.Services;
 using TelegramBotBase.Base;
+using TelegramBotBase.Controls;
 
 namespace TaskBot.Forms
 {
@@ -45,12 +46,15 @@ namespace TaskBot.Forms
             {
                 await Device.Send($"Задача создана.\nНазвание: {taskTitle}\nОписание:\n{taskDescription}");
                 var id = Guid.NewGuid();
+                
                 db.Tasks.Add(new Models.PersonalTask()
                 {
                     Id = id,
                     Title = taskTitle,
                     Description = taskDescription,
-                    CreatorDeviceId = message.DeviceId
+                    CreatorDeviceId = message.DeviceId,
+                    //Deadline = ,
+                    //Priority = 
                 });
 
                 await db.SaveChangesAsync();

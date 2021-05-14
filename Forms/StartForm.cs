@@ -24,7 +24,7 @@ namespace TaskBot.Forms
             try
             {
                 await base.Load(message);
-                
+                               
                 if (message.MessageType == MessageType.Text
                     && message.MessageText == "/start")
                 {
@@ -51,11 +51,8 @@ namespace TaskBot.Forms
             }
             catch (Exception e)
             {
-
                 throw;
             }
-
-
         }
 
         public override async Task Render(MessageResult message)

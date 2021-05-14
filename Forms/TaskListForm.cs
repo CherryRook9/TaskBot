@@ -62,7 +62,6 @@ namespace TaskBot.Forms
                 }
             }
 
-
             buttons.AddButtonRow("Вернуться в меню.", new CallbackData("nav", "back").Serialize());
             await this.Device.Send("Отображены все задачи", buttons);
         }
