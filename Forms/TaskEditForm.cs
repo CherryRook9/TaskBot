@@ -127,7 +127,6 @@ namespace TaskBot.Forms
                     await Device.Send($"Введите новое описание");
                     return;
                 case EditState.Responsible:
-                    //await Device.Send($"Введите другого ответственного");
                     await NavigateTo(DI.Resolve(new AssignTaskForm(this, editTaskId)));
                     currentState = EditState.Watch;
                     return;

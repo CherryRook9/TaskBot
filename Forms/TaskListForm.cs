@@ -73,7 +73,7 @@ namespace TaskBot.Forms
                 await Device.Send("Вы не имеете созданных или назначенных задач.");
             }
 
-            await Device.Send("Список созданных или назначенных задач");
+            await Device.Send("Список созданных");
 
             foreach (var task in tasks)
             {
@@ -95,7 +95,9 @@ namespace TaskBot.Forms
                 var messageText = 
                     $"Задача\n\nНазвание: *{task.Title}*\n" +
                     $"Описание:\n{task.Description}\n" +
-                    $"Ответственный пользователь:\n{task.Responsible.Login}";
+                    $"Ответственный пользователь: {task.Responsible?.Login ?? "Нет"}\n"+
+                    $"Дата окончания: {task.Deadline}\n"+
+                    $"Приоритет задачи: {task.Priority}";
 
                 await Device.Send(
                     messageText,

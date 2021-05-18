@@ -19,17 +19,17 @@ namespace TaskBot.Dialogs
             {
                 if (call.Method == "normal")
                 {
-                    Completed(Models.Priority.Normal);
+                    Completed(Models.Priority.Medium);
                     await this.CloseForm();
                 }
                 else if (call.Method == "important")
                 {
-                    Completed(Models.Priority.Important);
+                    Completed(Models.Priority.Hight);
                     await this.CloseForm();
                 }
                 else if (call.Method == "unimportant")
                 {
-                    Completed(Models.Priority.Unimportant);
+                    Completed(Models.Priority.Low);
                     await this.CloseForm();
                 }
             }
