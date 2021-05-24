@@ -2,7 +2,7 @@ using System;
 
 namespace TaskBot.Models
 {
-    public enum Priority { Hight, Medium, Low }
+    public enum Priority { High, Medium, Low }
     public class PersonalTask
     {
         public Guid Id { get; set; }

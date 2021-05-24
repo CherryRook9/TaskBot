@@ -24,7 +24,7 @@ namespace TaskBot.Dialogs
                 }
                 else if (call.Method == "important")
                 {
-                    Completed(Models.Priority.Hight);
+                    Completed(Models.Priority.High);
                     await this.CloseForm();
                 }
                 else if (call.Method == "unimportant")
